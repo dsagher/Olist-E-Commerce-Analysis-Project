@@ -1,6 +1,6 @@
 import pandas as pd
 from scipy.stats import lognorm
-import numpy as np
+
 import datetime as dt
 from pathlib import Path
 from sklearn.preprocessing import KBinsDiscretizer
@@ -140,7 +140,7 @@ def add_date_features(data: dict) -> dict:
     """
 
     data['order'] = data['order']
-    data['order']['purchase_month'] = data['order']['purchase_timestamp'].dt.to_period('M').dt.to_timestamp()
+    data['order']['purchase_month'] = data['order']['purchase_timestamp'].dt.month
     data['order']['purchase_year'] = data['order']['purchase_timestamp'].dt.year
     data['order']['purchase_quarter'] = data['order']['purchase_timestamp'].dt.quarter
     data['order']['purchase_day'] = data['order']['purchase_timestamp'].dt.day
@@ -233,6 +233,17 @@ def impute_order_delivery(data:dict) -> dict:
     data['order'] = filled[data['order'].columns]
 
     return data
+
+def create_delay_flag(data: dict)-> dict:
+    df_order: pd.DataFrame = data['order']
+    
+    median = df_order['delivery_time'].quantile(.5)
+    df_order['delayed'] = df_order['delivery_time'].apply(lambda x: 1 if x > median else 0)
+
+    data['order'] = df_order
+
+    return data
+    
 """----------------------------I/O----------------------------"""
 
 def preprocess_data() -> dict:
@@ -256,6 +267,8 @@ def preprocess_data() -> dict:
     data = add_customer_spending(data)
 
     data = impute_order_delivery(data)
+
+    data = create_delay_flag(data)
 
     return data
 

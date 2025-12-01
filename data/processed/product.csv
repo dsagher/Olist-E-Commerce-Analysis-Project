@@ -1,4 +1,4 @@
-product_id,name_length,product_description_lenght,photos_qty,weight,length,height,width,category_name
+product_id,name_length,description_length,photos_qty,weight,length,height,width,category_name
 1e9e8ef04dbcff4541ed26657ea517e5,40.0,287.0,1.0,225.0,16.0,10.0,14.0,perfumery
 3aa071139cb16b67ca9e5dea641aaa2f,44.0,276.0,1.0,1000.0,30.0,18.0,20.0,art
 96bd76ec8810374ed1b65e291975717f,46.0,250.0,1.0,154.0,18.0,9.0,15.0,sports_leisure
