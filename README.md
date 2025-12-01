@@ -7,7 +7,7 @@ An interactive Streamlit dashboard for exploring and analyzing Brazilian e-comme
 
 - **`app/webapp.py`**: Main Streamlit dashboard that displays KPIs (total revenue, orders, customers, top-selling city/category) and interactive visualizations including bubble charts and time-series analysis of sales and ARPU (Average Revenue Per User).
 
-- **`app/assets/preprocessing.py`**: Handles all data preprocessing including:
+- **`app/utils/preprocessing.py`**: Handles all data preprocessing including:
   - Loading raw and processed data
   - Column renaming and standardization
   - DateTime conversions
@@ -15,18 +15,18 @@ An interactive Streamlit dashboard for exploring and analyzing Brazilian e-comme
   - Region mapping for Brazilian states
   - Customer spending categorization
 
-- **`app/assets/merges.py`**: Provides data merging functions:
+- **`app/utils/merges.py`**: Provides data merging functions:
   - `get_sales_by_region_category()`: Merges customer, order, and product data by region
   - `get_average_sales_ARPU()`: Filters data by sales and ARPU thresholds
   - `get_highest_selling_cities()`: Identifies top-performing cities
   - `get_highest_selling_categories()`: Identifies best-selling product categories
 
-- **`app/assets/aggregations.py`**: Calculates key metrics:
+- **`app/utils/aggregations.py`**: Calculates key metrics:
   - ARPU (Average Revenue Per User) calculation
   - Total revenue, orders, and customer counts
   - Formatted string outputs for dashboard KPIs
 
-- **`app/assets/charts.py`**: Generates Altair visualizations:
+- **`app/utils/charts.py`**: Generates Altair visualizations:
   - Bubble charts for sales vs ARPU by region and category
   - Time-series line charts for order trends
   - Interactive tooltips and filtering
@@ -63,7 +63,7 @@ streamlit run app/webapp.py
 To regenerate processed datasets from raw data:
 
 ```bash
-python app/assets/preprocessing.py
+python app/utils/preprocessing.py
 ```
 
 

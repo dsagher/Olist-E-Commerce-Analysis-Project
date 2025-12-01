@@ -7,8 +7,8 @@ st.set_page_config(layout="wide")
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.assets.preprocessing import load_processed_data_streamlit
-from app.assets import charts, aggregations, merges
+from app.utils.preprocessing import load_processed_data_streamlit
+from app.utils import charts, aggregations, merges
 
 # Load processed data
 data = load_processed_data_streamlit()

@@ -7,7 +7,7 @@ from sklearn.preprocessing import KBinsDiscretizer
 from streamlit import cache_data
 
 # Get the project root directory
-# preprocessing.py -> assets/ -> app/ -> project_root/
+# preprocessing.py -> utils/ -> app/ -> project_root/
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_RAW_DIR = PROJECT_ROOT / 'data' / 'raw'
 DATA_PROCESSED_DIR = PROJECT_ROOT / 'data' / 'processed'
