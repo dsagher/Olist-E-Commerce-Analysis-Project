@@ -1,6 +1,7 @@
 import pandas as pd
+from app.utils.helpers import raise_for_invalid_year
 
-def get_sales_by_region_category(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
+def get_sales_by_region_category(data: dict[str, pd.DataFrame], year: int = 2017) -> pd.DataFrame:
     """
     Merge the customer, orders, geo, order item, to get sales by region
     Args:
@@ -10,18 +11,18 @@ def get_sales_by_region_category(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
                 - order: pd.DataFrame
                 - geo: pd.DataFrame
                 - order_item: pd.DataFrame
+        year: int - The year to get the sales by region and category for
     Returns:
         pd.DataFrame - Columns: category_name, region, sales, order_count
     
     Notes:
         - The merging could be done during preprocessing to avoid redundant merging
     """
-    
+    raise_for_invalid_year(year)
     df_customer = data['customer']
     df_orders = data['order']
     df_geo = data['geo']
     df_order_item = data['order_item']
-
 
     # Get unique zips with city, state, lat, lng, and region
     geo_cols = ['zip_code_prefix','region', 'city', 'state', 'latitude', 'longitude']
@@ -34,16 +35,15 @@ def get_sales_by_region_category(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
 
     # Merge zips and geo location with customer order data
     customer_order_geo = unique_zips.merge(customer_order, on='zip_code_prefix', how='inner')
-    
-    customer_order_geo_product = customer_order_geo.merge(df_order_item, on='order_id', how='inner')
+    df_year = customer_order_geo[customer_order_geo['purchase_year'] == year]
+    customer_order_geo_product = df_year.merge(df_order_item, on='order_id', how='inner')
 
     # Calculate sales by region and product category
     sales_by_region = (customer_order_geo_product
             .groupby(["category_name", "region"])
             .agg({"price": "sum", "order_id": "count"})
             .reset_index()
-            .rename(columns={"price": "sales", "order_id": "order_count"})
-            )
+            .rename(columns={"price": "sales", "order_id": "order_count"}))
     
     return sales_by_region
 
@@ -101,7 +101,7 @@ def get_average_sales_ARPU(sales_by_region: pd.DataFrame,
     merge['purchase_month'] = pd.to_datetime(merge['purchase_month'])
     return merge
 
-def get_highest_selling_cities(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
+def get_highest_selling_cities(data: dict[str, pd.DataFrame], year: int = 2017) -> pd.DataFrame:
     """
     Get the highest selling cities
     Args:
@@ -109,23 +109,26 @@ def get_highest_selling_cities(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
             Data:
                 - order: pd.DataFrame
                 - customer: pd.DataFrame
+        year: int - The year to get the highest selling cities for
     Returns:
         str - The highest selling cities
     """
+    raise_for_invalid_year(year)
     df_order = data['order']
     df_customer = data['customer']
 
-    order_cols = ['order_id', 'customer_id']
+    order_cols = ['order_id', 'customer_id', 'purchase_year']
     customer_cols = ['customer_id', 'city']
 
-    highest_selling_cities = (df_customer[customer_cols]
-                    .merge(df_order[order_cols], on='customer_id', how='inner')
+    merged = df_customer[customer_cols].merge(df_order[order_cols], on='customer_id', how='inner')
+    df_year = merged[merged['purchase_year'] == year]
+    highest_selling_cities = (df_year
                     .groupby('city').agg({'order_id': 'count'})
                     .sort_values(by='order_id', ascending=False))
-    
+    highest_selling_cities = highest_selling_cities.head(1).index[0].title()
     return highest_selling_cities
 
-def get_highest_selling_categories(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
+def get_highest_selling_categories(data: dict[str, pd.DataFrame], year: int = 2017) -> pd.DataFrame:
     """
     Get the highest selling categories
     Args:
@@ -135,12 +138,16 @@ def get_highest_selling_categories(data: dict[str, pd.DataFrame]) -> pd.DataFram
     Returns:
         str - The highest selling categories
     """
+    raise_for_invalid_year(year)
     df_order_item = data['order_item']
     df_product = data['product']
+    df_order = data['order']
 
-    highest_selling_categories = (df_order_item
-        .merge(df_product['product_id'], on='product_id', how='inner')
-        .groupby('category_name')
-        .agg({'price': 'sum'})
+    merged = df_order_item.merge(df_order[['order_id','purchase_year']], on='order_id', how='inner')
+    # merged = merged.merge(df_product[['category_name']], on='category_name', how='inner')
+    df_year = merged[merged['purchase_year'] == year]
+    highest_selling_categories = (df_year.groupby('category_name')
+        .agg({'price': 'sum', 'order_id': 'count'})
         .sort_values(by='price', ascending=False))
+    highest_selling_categories = highest_selling_categories.head(1).index[0].title().replace("_", " & ")
     return highest_selling_categories

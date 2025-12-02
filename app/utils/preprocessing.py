@@ -124,7 +124,7 @@ def convert_to_datetime(data: dict) -> dict:
 
 def add_delivery_time(data: dict) -> dict:
     """
-    
+    Add the delivery time feature
     """
     df_order = data['order']
 
@@ -147,6 +147,7 @@ def add_date_features(data: dict) -> dict:
     data['order']['purchase_dayofweek'] = data['order']['purchase_timestamp'].dt.dayofweek
     data['order']['purchase_dayofyear'] = data['order']['purchase_timestamp'].dt.dayofyear
     data['order']['purchase_weekday'] = data['order']['purchase_timestamp'].dt.weekday
+    data['order']['purchase_week'] = data['order']['purchase_dayofyear'] // 7 % 52 + 1
     return data
 
 def merge_product_category(data: dict) -> dict:
@@ -203,35 +204,13 @@ def add_customer_spending(data: dict) -> dict:
 def impute_order_delivery(data:dict) -> dict:
 
     df_order = data['order']
-    df_order_item = data['order_item']
-    df_seller = data['seller']
+    median_delivery_time = df_order['delivery_time'].median()
 
-    mask = df_order['order_status'].isin(['unavailable', 'delivered'])
-    df_order['delivered_customer_date'] = pd.to_datetime(df_order['delivered_customer_date'])
-    df_order['delivered_carrier_date'] = pd.to_datetime(df_order['delivered_carrier_date'])
+    df_order['delivery_time'] = df_order['delivery_time'].fillna(median_delivery_time)
+    df_order['delivered_carrier_date'] = df_order['purchase_timestamp'] + pd.to_timedelta(df_order['delivery_time'], unit='D')
+    df_order['delivered_customer_date'] = df_order['delivered_carrier_date']
 
-    filled = (
-        df_order[mask]
-        .merge(df_order_item, how='left')
-        .merge(df_seller, how='left')
-        # Impute median zip codes grouped by zip codes
-        .groupby('zip_code_prefix')
-        .apply(
-            lambda g: g.assign(
-            # Fill customer delivery date with values from records with order_status as delivered
-                order_delivered_customer_date=g['delivered_customer_date'].fillna(
-                    g.loc[g['order_status'] == 'delivered', 'delivered_customer_date'].median()
-                ),
-            # Fill carrier delivery date with values from records with order_status as delivered
-                order_delivered_carrier_date=g['delivered_carrier_date'].fillna(
-                    g.loc[g['order_status'] == 'delivered', 'delivered_carrier_date'].median()
-                )
-            )
-        )
-        .reset_index(drop=True)
-    )
-    data['order'] = filled[data['order'].columns]
-
+    data['order'] = df_order
     return data
 
 def create_delay_flag(data: dict)-> dict:
