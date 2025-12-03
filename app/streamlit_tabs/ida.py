@@ -8,7 +8,6 @@ from app.utils.helpers import set_ax_fig_style
 from app.utils.preprocessing import impute_order_delivery, add_delivery_time, rename_columns, convert_to_datetime
 
 
-
 def render_ida_tab():
     """Render the IDA (Initial Data Analysis) tab content"""
     data = preprocessing.load_raw_data()
@@ -33,7 +32,7 @@ def render_ida_tab():
     st.title("IDA")
 
 
-    """Tables and Columns with Null Values"""
+    """==========================Tables and Columns with Null Values=========================="""
 
     nulls_geo = df_geo.loc[:,(df_geo.isna().sum() > 0).values].columns.tolist()
     nulls_orders = df_order.loc[:,(df_order.isna().sum() > 0).values].columns.tolist()
@@ -62,10 +61,14 @@ def render_ida_tab():
     st.header("Tables and Columns with Null Values")
     null_cols = [i for i in null_cols if i['Columns']]
 
-    st.table(pd.DataFrame(null_cols))
+    col1, col2 = st.columns(2)
+    with col1:
+        st.table(pd.DataFrame(null_cols))
+
+    st.markdown("We will investigate the null values in the **Orders** table.")
 
 
-    """Missing Values Bar Chart"""
+    """==========================Missing Values Heatmap=========================="""
 
     fig, ax = plt.subplots(figsize=(10,3))
 
@@ -74,9 +77,12 @@ def render_ida_tab():
     sns.heatmap(df_order.isna().transpose(), cmap='viridis', ax=ax, xticklabels=False)
     st.pyplot(fig)
 
-    """Missing values in Delivery with delivered vs not delivered status"""
+    st.markdown("Most missing values are in the **order_delivered_carrier_date** and **order_delivered_customer_date** columns, which are the delivery dates.")
+
+    """==========================Missing values in Delivery with delivered vs not delivered status=========================="""
 
     st.header("Missing values in Delivery with delivered vs not delivered status")
+
     missing_mask = df_order['delivered_customer_date'].isna()
     delivered = df_order['order_status'] == 'delivered'
     missing_delivery_delivered = df_order.loc[missing_mask & delivered].copy()
@@ -93,12 +99,19 @@ def render_ida_tab():
     ).properties(width=750, height=600, title='Count of Null Delivery Dates by Delivery Status')
 
     st.altair_chart(chart)
-    st.write("Missing delivery values with delivered status:",f' {len(missing_delivery_delivered)}')
-    st.write("Missing delivery values without delivered status",f' {len(missing_delivery_not_delivered)}')
 
-    """All order statuses"""
+    missing_delivery_delivered_pct = len(missing_delivery_delivered) / len(df_order) * 100
+    missing_delivery_not_delivered_pct = len(missing_delivery_not_delivered) / len(df_order) * 100
 
-    st.header("Count of Null Delivery Dates by Order Status")
+    st.markdown(f"**Finding:** Missing delivery values **with delivered status:** {missing_delivery_delivered_pct:.2f}% of total orders")
+    st.markdown(f"**Finding:** Missing delivery values **without delivered status:** {missing_delivery_not_delivered_pct:.2f}% of total orders")
+
+    st.markdown("**Interpretation:** Only 0.01% of missing values occur in records with 'delivered' status. These are likely due to random error.")
+    st.markdown("**Next Steps:** Determine which delivery status is responsible for the majority of the 2.97% of nulls.")
+
+    """==========================All order statuses=========================="""
+
+    st.header("Investigate Null Delivery Dates by Order Status")
     not_delivered = (df_order.loc[missing_mask & ~ delivered]
                         .groupby('order_status')['order_id']
                         .count()
@@ -108,11 +121,16 @@ def render_ida_tab():
     fig = alt.Chart(not_delivered).mark_bar().encode(
             x=alt.X('order_status:N', title='Order Status', sort='-y'),
             y=alt.Y('order_id:Q', title='Count')
-        ).properties(width=750, height=750, title='Count of Null Delivery Dates by Order Status')
+        ).properties(width=750, height=750, title='Count of Null Delivery Dates by Order Status').configure_axisX(
+            labelAngle=45
+        )
 
     st.altair_chart(fig)
 
-    """Unavailable order status by timestamp"""
+    st.markdown("**Interpretation:** 3rd most common null order status is 'unavailable', which is likely due to cancellations.")
+    st.markdown("**Next Steps:** Determine reason for unavailable order status.")
+
+    """==========================Unavailable order status by timestamp=========================="""
 
     st.header("Unavailable order status by timestamp")
     # Filter for only unavailable orders
@@ -140,15 +158,14 @@ def render_ida_tab():
 
     st.pyplot(fig)
 
-    st.write("Total orders spike around 2018-01-01, along with unavailable orders. " \
+    st.markdown("**Observation:** Total orders spike around 2018-01-01, along with unavailable orders. " \
             "This could be due to normal software or human error. We will proceed with imputation to discover more about cancellation behavior.")
+    st.markdown("**Next Steps:** We will impute missing delivery dates by filling it with the median delivery time for all orders.")
 
-    """Impute missing values with 'unavailable' order status by grouping by seller zip code prefix and getting
-    median values for customer and carrier delivery dates."""
+    """==========================Impute missing values with 'unavailable' order status=========================="""
 
     st.header("Imputation")
-    st.write("We will impute missing delivery dates by filling it with the median delivery time for all orders.")
-
+    st.markdown("Below is the heatmap of the **Orders** table after imputation.")
     data = {}
     data['order'] = df_order
     data = add_delivery_time(data)

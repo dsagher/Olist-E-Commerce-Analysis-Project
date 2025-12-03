@@ -7,6 +7,8 @@ from app.utils.helpers import set_ax_fig_style
 from app.utils.aggregations import get_total_revenue, get_total_orders, get_total_customers, calculate_ARPU
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
+from scipy.stats import linregress
 
 
 def render_eda_tab():
@@ -27,7 +29,6 @@ def render_eda_tab():
 
     selected_year = st.selectbox("Select Year", [2016, 2017, 2018, 2019])
 
-    
     total_revenue = get_total_revenue(data)
     total_orders = get_total_orders(data, selected_year)
     total_customers = get_total_customers(data, selected_year)
@@ -60,8 +61,6 @@ def render_eda_tab():
 
 
 
-
-
     st.header("Sales by Region and Product Category")
     # Get unique zips with city, state, lat, lng, and region
     geo_cols = ['zip_code_prefix','region', 'city', 'state', 'latitude', 'longitude']
@@ -88,8 +87,8 @@ def render_eda_tab():
     sales_by_region = calculate_ARPU(sales_by_region)
 
     bubble_chart = alt.Chart(sales_by_region).mark_circle(opacity=0.7).encode(
-        x=alt.X('sales:Q', title='Total Sales (BRL)'),
-        y=alt.Y('ARPU:Q', title='Average Revenue per Order (ARPU)'),
+        x=alt.X('sales:Q', title='Total Sales (BRL)').scale(type='log'),
+        y=alt.Y('ARPU:Q', title='Average Revenue per Order (ARPU)').scale(type='log'),
         size=alt.Size('order_count:Q', title='Order Count', scale=alt.Scale(range=[30, 1000])),
         color=alt.Color('region:N', title='Region'),
         tooltip=['category_name', 'region', 'sales', 'ARPU', 'order_count']
@@ -107,7 +106,7 @@ def render_eda_tab():
 
     st.altair_chart(bubble_chart + rule + rule2)
 
-
+    st.markdown("This chart allows us to visualize product categories that are performing well among different metrics and regions.")
     st.header("Delivery Time by Review Score")
 
     order_cols = ['order_id', 'delivery_time']
@@ -117,6 +116,26 @@ def render_eda_tab():
 
     fig, ax = plt.subplots(figsize=(8, 3))
     ax, fig = set_ax_fig_style(title='', xaxis_label='Review Score', yaxis_label='Delivery Time', ax=ax, fig=fig, color='white')
-    sns.barplot(data=source, x='review_score', y='delivery_time', ax=ax)
+
+    # Barplot for average delivery time per review score
+    sns.lineplot(data=source, x='delivery_time', y='review_score', ax=ax, color='C0')
+
+    means = source.groupby("delivery_time")["review_score"].mean().reset_index()
+    x = means["delivery_time"]
+    y = means["review_score"]
+    slope, intercept, r_value, p_value, std_err = linregress(x, y)
+    trend_y = slope * x + intercept
+    ax.plot(x, trend_y, color='red', linewidth=1, label='Trend line')
+    ax.legend()
+    direction = "negatively" if r_value < 0 else "positively"
+    r_squared = r_value**2 * 100
+
+
     plt.ylim(0, 10)
+    plt.xlim(0, 50)
+    plt.text(5, 7, f"p-value: {p_value:.2f}, r: {r_value:.2f}, R^2: {r_squared:.2f}%", color='white')
     st.pyplot(fig)
+
+    st.markdown(f"**Interpretation:** The average delivery time is **{direction} correlated** with the review score " \
+        f"(**p < 0.001**), but only **{r_squared:.2f}%** of the variance can be explained. " \
+        "This suggests that there is a **weak** relationship between delivery time and review score.")
