@@ -5,7 +5,7 @@ st.set_page_config(page_title="Olist E-Commerce Data Analysis Dashboard", page_i
 
 
 
-ida_tab, eda_tab, modeling_tab, sales_tab = st.tabs(["IDA", "EDA", "Modeling", "Sales"])
+ida_tab, eda_tab, modeling_tab = st.tabs(["IDA", "EDA", "Modeling"])
 
 with ida_tab:
     ida.render_ida_tab()

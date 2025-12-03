@@ -118,7 +118,7 @@ def render_eda_tab():
     ax, fig = set_ax_fig_style(title='', xaxis_label='Review Score', yaxis_label='Delivery Time', ax=ax, fig=fig, color='white')
 
     # Barplot for average delivery time per review score
-    sns.lineplot(data=source, x='delivery_time', y='review_score', ax=ax, color='C0')
+    sns.barplot(data=source, x='delivery_time', y='review_score', ax=ax, color='C0')
 
     means = source.groupby("delivery_time")["review_score"].mean().reset_index()
     x = means["delivery_time"]

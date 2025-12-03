@@ -130,7 +130,10 @@ def add_delivery_time(data: dict) -> dict:
 
     delivery_time = (df_order['delivered_carrier_date'] - df_order['purchase_timestamp']).dt.days
 
-    data['order']['delivery_time'] = delivery_time
+    df_order.loc[:, 'delivery_time'] = delivery_time
+    df_order.loc[df_order['delivery_time'] < 0, 'delivery_time'] = 0
+    
+    data['order'] = df_order
 
     return data
 
