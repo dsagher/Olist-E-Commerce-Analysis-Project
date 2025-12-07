@@ -1,48 +1,79 @@
 # Olist E-Commerce Data Analysis Dashboard
 *Project for CMSE 830 - Fall 2025*
 
-An interactive Streamlit dashboard for exploring and analyzing Brazilian e-commerce data from Olist. This project provides comprehensive exploratory data analysis (EDA) with visualizations for sales patterns, customer behavior, and regional insights.
+An interactive Streamlit dashboard for exploring and analyzing Brazilian e-commerce data from Olist. This project provides comprehensive data analysis across three main areas: Initial Data Analysis (IDA), Exploratory Data Analysis (EDA), and Predictive Modeling.
 
-### Application Files
+## Application Structure
 
-- **`app/webapp.py`**: Main Streamlit dashboard that displays KPIs (total revenue, orders, customers, top-selling city/category) and interactive visualizations including bubble charts and time-series analysis of sales and ARPU (Average Revenue Per User).
+### Main Application
+
+- **`app.py`**: Main Streamlit application entry point that organizes the dashboard into three tabs:
+  - **IDA Tab**: Initial Data Analysis focusing on data quality, missing values, and imputation strategies
+  - **EDA Tab**: Exploratory Data Analysis with KPIs, sales visualizations, and correlation analysis
+  - **Modeling Tab**: Predictive modeling using logistic regression to predict delivery delays
+
+### Streamlit Tabs
+
+- **`app/streamlit_tabs/ida.py`**: Initial Data Analysis tab that displays:
+  - Tables and columns with null values
+  - Missing values heatmaps
+  - Analysis of missing delivery dates by order status
+  - Imputation strategies and results
+
+- **`app/streamlit_tabs/eda.py`**: Exploratory Data Analysis tab featuring:
+  - Sales KPIs (total revenue, orders, customers, top-selling city/category)
+  - Interactive bubble charts for sales vs ARPU by region and product category
+  - Delivery time analysis and correlation with review scores
+
+- **`app/streamlit_tabs/modeling.py`**: Predictive Modeling tab including:
+  - Feature engineering (one-hot encoding, product dimensions)
+  - F-regression for feature selection
+  - Logistic regression models for predicting delivery delays
+  - Model evaluation metrics (confusion matrices, ROC curves, precision-recall curves)
+
+### Utility Modules
 
 - **`app/utils/preprocessing.py`**: Handles all data preprocessing including:
   - Loading raw and processed data
   - Column renaming and standardization
   - DateTime conversions
-  - Feature engineering (delivery time, date features, product volume)
+  - Feature engineering (delivery time, date features, product volume, delay flags)
   - Region mapping for Brazilian states
   - Customer spending categorization
+  - Missing value imputation
+  - Main preprocessing pipeline (`preprocess_data()`) and data saving functions
 
 - **`app/utils/merges.py`**: Provides data merging functions:
-  - `get_sales_by_region_category()`: Merges customer, order, and product data by region
+  - `get_sales_by_region_category()`: Merges customer, order, geo, and product data by region and category
   - `get_average_sales_ARPU()`: Filters data by sales and ARPU thresholds
-  - `get_highest_selling_cities()`: Identifies top-performing cities
-  - `get_highest_selling_categories()`: Identifies best-selling product categories
+  - `get_highest_selling_cities()`: Identifies top-performing cities by year
+  - `get_highest_selling_categories()`: Identifies best-selling product categories by year
 
 - **`app/utils/aggregations.py`**: Calculates key metrics:
-  - ARPU (Average Revenue Per User) calculation
-  - Total revenue, orders, and customer counts
-  - Formatted string outputs for dashboard KPIs
+  - `calculate_ARPU()`: Average Revenue Per Order calculation
+  - `get_total_revenue()`: Total revenue by year
+  - `get_total_orders()`: Total order count by year
+  - `get_total_customers()`: Total customer count by year
+  - All functions return formatted string outputs for dashboard KPIs
 
-- **`app/utils/charts.py`**: Generates Altair visualizations:
-  - Bubble charts for sales vs ARPU by region and category
-  - Time-series line charts for order trends
-  - Interactive tooltips and filtering
+- **`app/utils/helpers.py`**: Helper functions:
+  - `set_ax_fig_style()`: Matplotlib styling for consistent visualizations
+  - `raise_for_invalid_year()`: Validation for year parameters
 
 ### Data Files
 
-- **`data/raw/`**: Contains original Olist datasets downloaded from the source, including customer, order, product, seller, payment, review, and geolocation data.
+- **`data/raw/`**: Contains original Olist datasets downloaded from the source, including:
+  - Customer, order, product, seller, payment, review, and geolocation data
+  - Product category name translations
 
-- **`data/processed/`**: Contains cleaned and feature-engineered datasets ready for analysis and visualization.
+- **`data/processed/`**: Contains cleaned and feature-engineered datasets ready for analysis and visualization, generated by the preprocessing pipeline.
 
 ### Notebooks
 
 - **`notebooks/cleaning.ipynb`**: Documents the data cleaning process and quality checks
 - **`notebooks/correlation_analysis.ipynb`**: Statistical analysis and correlation studies
 - **`notebooks/EDA.ipynb`**: Exploratory data analysis and initial insights
-- **`notebooks/feature_engineering.ipynb`**: Feature creation and transformation experiments
+- **`notebooks/predictive_analysis.ipynb`**: Predictive modeling experiments and analysis
 
 ## Getting Started
 
@@ -55,32 +86,43 @@ pip install -r requirements.txt
 ### Running the Dashboard
 
 ```bash
-streamlit run app/webapp.py
+streamlit run app.py
 ```
 
 ### Processing Raw Data
 
-To regenerate processed datasets from raw data:
+To regenerate processed datasets from raw data, run the preprocessing script:
 
 ```bash
-python app/utils/preprocessing.py
+python -m app.utils.preprocessing
 ```
 
+Or import and call the function directly:
+
+```python
+from app.utils.preprocessing import save_processed_data
+save_processed_data()
+```
 
 ## Features
 
-- **KPI Dashboard**: View key business metrics at a glance
-- **Regional Analysis**: Explore sales patterns across Brazilian regions
-- **ARPU Insights**: Identify high-value and low-value customer segments
-- **Time-Series Analysis**: Track order trends over time
-- **Interactive Visualizations**: Filter and explore data dynamically
+- **Three-Tab Interface**: Organized analysis workflow from initial data exploration to predictive modeling
+- **KPI Dashboard**: View key business metrics (revenue, orders, customers, top cities/categories) with year filtering
+- **Regional Analysis**: Explore sales patterns across Brazilian regions with interactive bubble charts
+- **ARPU Insights**: Analyze Average Revenue Per Order by product category and region
+- **Data Quality Analysis**: Comprehensive missing value analysis and imputation strategies
+- **Predictive Modeling**: Logistic regression models to predict delivery delays based on product characteristics
+- **Interactive Visualizations**: Filter and explore data dynamically with Altair and Matplotlib charts
 
 ## Technologies Used
 
-- **Streamlit**: Interactive web dashboard
+- **Streamlit**: Interactive web dashboard framework
 - **Pandas**: Data manipulation and analysis
 - **Altair**: Declarative statistical visualizations
-- **Scikit-learn**: Feature engineering (KBinsDiscretizer)
-- **SciPy**: Statistical computations
+- **Matplotlib & Seaborn**: Statistical plotting
+- **Scikit-learn**: Machine learning (Logistic Regression, OneHotEncoder, KBinsDiscretizer, feature selection)
+- **SciPy**: Statistical computations (linear regression, correlation analysis)
+- **NumPy**: Numerical computing
+- **PyDeck**: Geographic visualizations (if used)
 
 ---
