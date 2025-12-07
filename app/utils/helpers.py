@@ -10,8 +10,8 @@ def set_ax_fig_style(title: str,
     Set the style of the axes figure
     """
     fig.patch.set_alpha(0) 
-    ax.set_facecolor("none")
-    ax.tick_params(colors='white')
+    # ax.set_facecolor("none")
+    # ax.tick_params(colors='white')
     ax.xaxis.label.set_color(color)
     ax.yaxis.label.set_color(color)
     ax.xaxis.set_tick_params(labelsize=9)

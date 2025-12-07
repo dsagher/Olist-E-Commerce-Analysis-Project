@@ -112,28 +112,24 @@ def render_eda_tab():
     order_cols = ['order_id', 'delivery_time']
     review_cols = ['order_id', 'review_score']
 
-    source = df_order[order_cols].merge(df_order_review[review_cols], on='order_id', how='left')
+    source = df_order[order_cols].merge(df_order_review[review_cols], on='order_id', how='left').dropna(axis=0)
 
     fig, ax = plt.subplots(figsize=(8, 3))
     ax, fig = set_ax_fig_style(title='', xaxis_label='Review Score', yaxis_label='Delivery Time', ax=ax, fig=fig, color='white')
 
     # Barplot for average delivery time per review score
-    sns.barplot(data=source, x='delivery_time', y='review_score', ax=ax, color='C0')
+    sns.regplot(data=source, x="delivery_time", y="review_score")
 
-    means = source.groupby("delivery_time")["review_score"].mean().reset_index()
-    x = means["delivery_time"]
-    y = means["review_score"]
-    slope, intercept, r_value, p_value, std_err = linregress(x, y)
-    trend_y = slope * x + intercept
-    ax.plot(x, trend_y, color='red', linewidth=1, label='Trend line')
+    res = linregress(source["delivery_time"], source["review_score"])
+    
     ax.legend()
-    direction = "negatively" if r_value < 0 else "positively"
-    r_squared = r_value**2 * 100
+    direction = "negatively" if res.rvalue < 0 else "positively" #type: ignore
+    r_squared = res.rvalue**2 * 100 #type: ignore
 
 
     plt.ylim(0, 10)
     plt.xlim(0, 50)
-    plt.text(5, 7, f"p-value: {p_value:.2f}, r: {r_value:.2f}, R^2: {r_squared:.2f}%", color='white')
+    plt.text(5, 7, f"p-value: {res.pvalue:.2f}, r: {res.rvalue:.2f}, R^2: {r_squared:.2f}%", color='white') #type: ignore
     st.pyplot(fig)
 
     st.markdown(f"**Interpretation:** The average delivery time is **{direction} correlated** with the review score " \

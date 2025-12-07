@@ -1,13 +1,8 @@
 import pandas as pd
-from scipy.stats import lognorm
-
-import datetime as dt
 from pathlib import Path
 from sklearn.preprocessing import KBinsDiscretizer
 from streamlit import cache_data
 
-# Get the project root directory
-# preprocessing.py -> utils/ -> app/ -> project_root/
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_RAW_DIR = PROJECT_ROOT / 'data' / 'raw'
 DATA_PROCESSED_DIR = PROJECT_ROOT / 'data' / 'processed'

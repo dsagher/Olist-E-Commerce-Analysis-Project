@@ -61,6 +61,8 @@ def run_log_reg(df: pd.DataFrame, X: str, y: str):
 def render_modeling_tab():
 
     st.title("Modeling")
+    st.write("We will use F-regression to select features for logistic regression.")
+    st.write("The goal is to find the most significant features that contribute to the target variable 'delayed', and then run logistic regression on the selected features to get the odds ratio and beta coefficients.")
     """=================================================Feature Engineering================================================="""
 
     """============Define feature and target variables============"""
@@ -78,6 +80,7 @@ def render_modeling_tab():
     df_order_item_orders = df_order_item.merge(df_order[orders_cols])
 
     """============One-hot encode category_name column============"""
+    st.header("Feature Engineering: One-hot encode category_name column")
 
     ohe = OneHotEncoder(sparse_output=False)
 
@@ -86,7 +89,6 @@ def render_modeling_tab():
     category_cols = ohe.get_feature_names_out()
 
     category_cols = [col.strip('x0_') for col in category_cols]
-
     """============Create feature df's============"""
 
     category_df = pd.DataFrame(encoded, columns=category_cols)
@@ -95,8 +97,16 @@ def render_modeling_tab():
     prod_dim_df = pd.DataFrame(df_order_item_orders[prod_dim_cols])
     prod_dim_df = pd.concat((prod_dim_df, df_order_item_orders[target]), axis=1).dropna(axis=0)
 
+    st.write("DataFrames for feature engineering:")
+    st.write("category_df:")
+    st.write(category_df)
+    st.write("prod_dim_df:")
+    st.write(prod_dim_df)
+
+    st.divider()
     """============Run F-regression on categories============"""
 
+    st.header("F-regression on categories")
     X_cat = category_df.drop(columns='delayed')
     y_cat = category_df[target]
 
@@ -126,7 +136,7 @@ def render_modeling_tab():
 
     """============Run F-regression on dimensions============"""
 
-
+    st.header("F-regression on dimensions")
     X_dim = prod_dim_df[prod_dim_cols]
     y_dim = prod_dim_df[target]
 
@@ -240,9 +250,8 @@ def render_modeling_tab():
         st.pyplot(fig)
 
     st.markdown("**Interpretation:**")
-    st.write("The confusion matrix shows the number of true positives, false positives, true negatives, and false negatives.")
-    st.write("The precision-recall curve shows the precision and recall at different thresholds.")
-    st.write("The ROC curve shows the true positive rate and false positive rate at different thresholds.")
+    st.write("The classification accuracy is not significantly different from the baseline accuracy, indicating that the model is not able to classify product dimensions effectively.")
+    st.write("The true positive rate and false positive rate are linearly related, indicating that the model is not able to classify product dimensions effectively.")
 
     """============Test Classification Strength of Product Categories============"""
 
@@ -279,6 +288,5 @@ def render_modeling_tab():
         st.pyplot(fig)
 
     st.markdown("**Interpretation:**")
-    st.write("The confusion matrix shows the number of true positives, false positives, true negatives, and false negatives.")
-    st.write("The precision-recall curve shows the precision and recall at different thresholds.")
-    st.write("The ROC curve shows the true positive rate and false positive rate at different thresholds.")
+    st.write("The classification accuracy is not significantly different from the baseline accuracy, indicating that the model is not able to classify product categories effectively.")
+    st.write("The true positive rate and false positive rate are linearly related, indicating that the model is not able to classify product categories effectively.")
